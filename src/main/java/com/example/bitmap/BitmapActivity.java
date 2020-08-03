@@ -4,6 +4,7 @@ import android.content.res.AssetManager;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.os.Bundle;
+import android.os.Environment;
 import android.support.v7.app.AppCompatActivity;
 import android.view.View;
 import android.widget.Button;
@@ -11,6 +12,9 @@ import android.widget.ImageView;
 import android.widget.TextView;
 
 import java.io.ByteArrayOutputStream;
+import java.io.File;
+import java.io.FileNotFoundException;
+import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 
@@ -28,6 +32,7 @@ TextView tvInfo;
         btnFormAssets=findViewById(R.id.btnFormAssets);
         ivPic=findViewById(R.id.ivPic);
         tvInfo=findViewById(R.id.tvInfo);
+        savePicToDisk(0);
         btnFormAssets.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
@@ -37,6 +42,30 @@ TextView tvInfo;
                 tvInfo.setText(bitmapInfo);
             }
         });
+    }
+
+    private void savePicToDisk(int i) {
+        BitmapInit("pic.jpg");
+        ByteArrayOutputStream byteArrayOutputStream=new ByteArrayOutputStream();
+        image.compress(Bitmap.CompressFormat.JPEG,100,byteArrayOutputStream);
+        File file=new File(getExternalFilesDir(Environment.DIRECTORY_DOWNLOADS),"pic.jpg");
+        if (!file.exists()){
+            try {
+                file.createNewFile();
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+        }
+        FileOutputStream  fileOutputStream= null;
+        try {
+            fileOutputStream = new FileOutputStream(file);
+            fileOutputStream.write(byteArrayOutputStream.toByteArray());
+        } catch (FileNotFoundException e) {
+            e.printStackTrace();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+
     }
 
     private void BitmapInit(String name) {
