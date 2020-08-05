@@ -11,6 +11,7 @@ import android.widget.Button;
 import android.widget.ImageView;
 import android.widget.TextView;
 
+import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.FileNotFoundException;
@@ -21,6 +22,7 @@ import java.io.InputStream;
 public class BitmapActivity extends AppCompatActivity {
 Button btnFormAssets;
     Button btFormDrawable;
+    Button btnQualityCompress;
 ImageView ivPic;
 Bitmap image=null;
 TextView tvInfo;
@@ -32,9 +34,10 @@ TextView tvInfo;
         setContentView(R.layout.activity_bitmap);
         btnFormAssets=findViewById(R.id.btnFormAssets);
         btFormDrawable=findViewById(R.id.btnFromDrawable);
+        btnQualityCompress=findViewById(R.id.btnQualityCompress);
         ivPic=findViewById(R.id.ivPic);
         tvInfo=findViewById(R.id.tvInfo);
-        savePicToDisk(0);
+        savePicToDisk(50);
         btnFormAssets.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
@@ -54,12 +57,32 @@ TextView tvInfo;
                 tvInfo.setText(bitmapInfo);
             }
         });
+
+        btnQualityCompress.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                BitmapInit("pic.jpg");
+                ByteArrayOutputStream byteArrayOutputStream=new ByteArrayOutputStream();
+                image.compress(Bitmap.CompressFormat.JPEG,100,byteArrayOutputStream);
+                int options=100;
+                while (byteArrayOutputStream.toByteArray().length/1024>100){
+                    byteArrayOutputStream.reset();
+                    image.compress(Bitmap.CompressFormat.JPEG,options,byteArrayOutputStream);
+                    options-=10;
+                    ByteArrayInputStream isBm=new ByteArrayInputStream(byteArrayOutputStream.toByteArray());
+                    Bitmap bitmap=BitmapFactory.decodeStream(isBm);
+                    ivPic.setImageBitmap(bitmap);
+                    showInfo(bitmap);
+                    tvInfo.setText(bitmapInfo);
+                }
+            }
+        });
     }
 
     private void savePicToDisk(int i) {
         BitmapInit("pic.jpg");
         ByteArrayOutputStream byteArrayOutputStream=new ByteArrayOutputStream();
-        image.compress(Bitmap.CompressFormat.JPEG,100,byteArrayOutputStream);
+        image.compress(Bitmap.CompressFormat.JPEG,i,byteArrayOutputStream);
         File file=new File(getExternalFilesDir(Environment.DIRECTORY_DOWNLOADS),"pic.jpg");
         if (!file.exists()){
             try {
@@ -95,7 +118,7 @@ TextView tvInfo;
 
     private void showInfo(Bitmap image) {
         ByteArrayOutputStream byteArrayOutputStream=new ByteArrayOutputStream();
-image.compress(Bitmap.CompressFormat.JPEG,100,byteArrayOutputStream);
+image.compress(Bitmap.CompressFormat.JPEG,60,byteArrayOutputStream);
  bitmapInfo="图像宽高:"+image.getWidth()+"*"+image.getHeight()+"\n"+
         "图片格式:"+image.getConfig().name()+"\n"+
         "占用内存大小:"+image.getByteCount()/1024+"kb \n"+
