@@ -6,6 +6,7 @@ import android.graphics.BitmapFactory;
 import android.os.Bundle;
 import android.os.Environment;
 import android.support.v7.app.AppCompatActivity;
+import android.util.Log;
 import android.view.View;
 import android.widget.Button;
 import android.widget.ImageView;
@@ -20,24 +21,28 @@ import java.io.IOException;
 import java.io.InputStream;
 
 public class BitmapActivity extends AppCompatActivity {
-Button btnFormAssets;
+    Button btnFormAssets;
     Button btFormDrawable;
     Button btnQualityCompress;
-ImageView ivPic;
-Bitmap image=null;
-TextView tvInfo;
+    Button btnInSampleCompress;
+    ImageView ivPic;
+    Bitmap image = null;
+    TextView tvInfo;
     String bitmapInfo;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_bitmap);
-        btnFormAssets=findViewById(R.id.btnFormAssets);
-        btFormDrawable=findViewById(R.id.btnFromDrawable);
-        btnQualityCompress=findViewById(R.id.btnQualityCompress);
-        ivPic=findViewById(R.id.ivPic);
-        tvInfo=findViewById(R.id.tvInfo);
+        btnFormAssets = findViewById(R.id.btnFormAssets);
+        btFormDrawable = findViewById(R.id.btnFromDrawable);
+        btnQualityCompress = findViewById(R.id.btnQualityCompress);
+        btnInSampleCompress = findViewById(R.id.btnInSampleCompress);
+
+        ivPic = findViewById(R.id.ivPic);
+        tvInfo = findViewById(R.id.tvInfo);
         savePicToDisk(50);
+        //显示assets图片
         btnFormAssets.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
@@ -47,51 +52,90 @@ TextView tvInfo;
                 tvInfo.setText(bitmapInfo);
             }
         });
-
+//显示download下面图片
         btFormDrawable.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
-                image=BitmapFactory.decodeResource(getResources(),R.drawable.pic);
+                image = BitmapFactory.decodeResource(getResources(), R.drawable.pic);
                 ivPic.setImageBitmap(image);
                 showInfo(image);
                 tvInfo.setText(bitmapInfo);
             }
         });
-
+//显示质量压缩图片
         btnQualityCompress.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
                 BitmapInit("pic.jpg");
-                ByteArrayOutputStream byteArrayOutputStream=new ByteArrayOutputStream();
-                image.compress(Bitmap.CompressFormat.JPEG,100,byteArrayOutputStream);
-                int options=100;
-                while (byteArrayOutputStream.toByteArray().length/1024>100){
+                ByteArrayOutputStream byteArrayOutputStream = new ByteArrayOutputStream();
+                image.compress(Bitmap.CompressFormat.JPEG, 100, byteArrayOutputStream);
+                int options = 100;
+                while (byteArrayOutputStream.toByteArray().length / 1024 > 100) {
                     byteArrayOutputStream.reset();
-                    image.compress(Bitmap.CompressFormat.JPEG,options,byteArrayOutputStream);
-                    options-=10;
-                    ByteArrayInputStream isBm=new ByteArrayInputStream(byteArrayOutputStream.toByteArray());
-                    Bitmap bitmap=BitmapFactory.decodeStream(isBm);
+                    image.compress(Bitmap.CompressFormat.JPEG, options, byteArrayOutputStream);
+                    options -= 10;
+                    ByteArrayInputStream isBm = new ByteArrayInputStream(byteArrayOutputStream.toByteArray());
+                    Bitmap bitmap = BitmapFactory.decodeStream(isBm);
                     ivPic.setImageBitmap(bitmap);
                     showInfo(bitmap);
                     tvInfo.setText(bitmapInfo);
                 }
             }
         });
+//采样率压缩显示
+        btnInSampleCompress.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                BitmapFactory.Options options = new BitmapFactory.Options();
+                options.inJustDecodeBounds = true;
+                BitmapFactory.decodeResource(getResources(), R.drawable.pic, options);
+                options.inJustDecodeBounds = false;
+                options.inSampleSize = caculateSampleSize(options, 500, 500);
+                image = BitmapFactory.decodeResource(getResources(), R.drawable.pic, options);
+                ivPic.setImageBitmap(image);
+                showInfo(image);
+                tvInfo.setText(bitmapInfo);
+            }
+        });
     }
 
+    /**
+     * 计算出所需要压缩的大小
+     *
+     * @param options
+     * @param reqWidth  我们期望的图片的宽，单位px
+     * @param reqHeight 我们期望的图片的高，单位px
+     * @return
+     */
+    private int caculateSampleSize(BitmapFactory.Options options, int reqWidth, int reqHeight) {
+        int samplesize = 1;
+        int picWitch = options.outWidth;
+        int picHeight = options.outHeight;
+        if (picHeight > reqHeight || picWitch > reqWidth) {
+            int halfPicWidth = picWitch / 2;
+            int halfPicHeight = picHeight / 2;
+            while (halfPicHeight / samplesize > reqHeight || halfPicWidth / samplesize > reqWidth) {
+                samplesize *= 2;
+            }
+        }
+        Log.d("zmz-----", "samplesize=" + samplesize);
+        return samplesize;
+    }
+
+    //将图片转换文件存储到download下面
     private void savePicToDisk(int i) {
         BitmapInit("pic.jpg");
-        ByteArrayOutputStream byteArrayOutputStream=new ByteArrayOutputStream();
-        image.compress(Bitmap.CompressFormat.JPEG,i,byteArrayOutputStream);
-        File file=new File(getExternalFilesDir(Environment.DIRECTORY_DOWNLOADS),"pic.jpg");
-        if (!file.exists()){
+        ByteArrayOutputStream byteArrayOutputStream = new ByteArrayOutputStream();
+        image.compress(Bitmap.CompressFormat.JPEG, i, byteArrayOutputStream);
+        File file = new File(getExternalFilesDir(Environment.DIRECTORY_DOWNLOADS), "pic.jpg");
+        if (!file.exists()) {
             try {
                 file.createNewFile();
             } catch (IOException e) {
                 e.printStackTrace();
             }
         }
-        FileOutputStream  fileOutputStream= null;
+        FileOutputStream fileOutputStream = null;
         try {
             fileOutputStream = new FileOutputStream(file);
             fileOutputStream.write(byteArrayOutputStream.toByteArray());
@@ -103,12 +147,13 @@ TextView tvInfo;
 
     }
 
+    //从assets里面读取图片
     private void BitmapInit(String name) {
         AssetManager am = getResources().getAssets();
         InputStream is = null;
         try {
             is = am.open(name);
-            image= BitmapFactory.decodeStream(is);
+            image = BitmapFactory.decodeStream(is);
 
             is.close();
         } catch (IOException e) {
@@ -116,15 +161,16 @@ TextView tvInfo;
         }
     }
 
+    //显示图片信息
     private void showInfo(Bitmap image) {
-        ByteArrayOutputStream byteArrayOutputStream=new ByteArrayOutputStream();
-image.compress(Bitmap.CompressFormat.JPEG,60,byteArrayOutputStream);
- bitmapInfo="图像宽高:"+image.getWidth()+"*"+image.getHeight()+"\n"+
-        "图片格式:"+image.getConfig().name()+"\n"+
-        "占用内存大小:"+image.getByteCount()/1024+"kb \n"+
-        "屏幕的density:"+getResources().getDisplayMetrics().density+"\n"+
-        "bitmap.density:"+image.getDensity()+"\n"+
-        "Bitmap转换成文件大小:"+byteArrayOutputStream.toByteArray().length/1024+"kb";
+        ByteArrayOutputStream byteArrayOutputStream = new ByteArrayOutputStream();
+        image.compress(Bitmap.CompressFormat.JPEG, 60, byteArrayOutputStream);
+        bitmapInfo = "图像宽高:" + image.getWidth() + "*" + image.getHeight() + "\n" +
+                "图片格式:" + image.getConfig().name() + "\n" +
+                "占用内存大小:" + image.getByteCount() / 1024 + "kb \n" +
+                "屏幕的density:" + getResources().getDisplayMetrics().density + "\n" +
+                "bitmap.density:" + image.getDensity() + "\n" +
+                "Bitmap转换成文件大小:" + byteArrayOutputStream.toByteArray().length / 1024 + "kb";
         try {
             byteArrayOutputStream.close();
         } catch (IOException e) {
