@@ -20,6 +20,7 @@ import java.io.InputStream;
 
 public class BitmapActivity extends AppCompatActivity {
 Button btnFormAssets;
+    Button btFormDrawable;
 ImageView ivPic;
 Bitmap image=null;
 TextView tvInfo;
@@ -30,6 +31,7 @@ TextView tvInfo;
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_bitmap);
         btnFormAssets=findViewById(R.id.btnFormAssets);
+        btFormDrawable=findViewById(R.id.btnFromDrawable);
         ivPic=findViewById(R.id.ivPic);
         tvInfo=findViewById(R.id.tvInfo);
         savePicToDisk(0);
@@ -37,6 +39,16 @@ TextView tvInfo;
             @Override
             public void onClick(View view) {
                 BitmapInit("pic.jpg");
+                ivPic.setImageBitmap(image);
+                showInfo(image);
+                tvInfo.setText(bitmapInfo);
+            }
+        });
+
+        btFormDrawable.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                image=BitmapFactory.decodeResource(getResources(),R.drawable.pic);
                 ivPic.setImageBitmap(image);
                 showInfo(image);
                 tvInfo.setText(bitmapInfo);
