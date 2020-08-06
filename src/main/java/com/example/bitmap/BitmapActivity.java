@@ -3,8 +3,11 @@ package com.example.bitmap;
 import android.content.res.AssetManager;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
+import android.graphics.Canvas;
+import android.graphics.RectF;
 import android.os.Bundle;
 import android.os.Environment;
+import android.os.Handler;
 import android.support.v7.app.AppCompatActivity;
 import android.util.Log;
 import android.view.View;
@@ -25,6 +28,7 @@ public class BitmapActivity extends AppCompatActivity {
     Button btFormDrawable;
     Button btnQualityCompress;
     Button btnInSampleCompress;
+    Button btnScaleCompress;
     ImageView ivPic;
     Bitmap image = null;
     TextView tvInfo;
@@ -38,7 +42,7 @@ public class BitmapActivity extends AppCompatActivity {
         btFormDrawable = findViewById(R.id.btnFromDrawable);
         btnQualityCompress = findViewById(R.id.btnQualityCompress);
         btnInSampleCompress = findViewById(R.id.btnInSampleCompress);
-
+        btnScaleCompress = findViewById(R.id.btnScaleCompress);
         ivPic = findViewById(R.id.ivPic);
         tvInfo = findViewById(R.id.tvInfo);
         savePicToDisk(50);
@@ -88,12 +92,44 @@ public class BitmapActivity extends AppCompatActivity {
             public void onClick(View view) {
                 BitmapFactory.Options options = new BitmapFactory.Options();
                 options.inJustDecodeBounds = true;
+                image = BitmapFactory.decodeResource(getResources(), R.drawable.pic);
+                ivPic.setImageBitmap(image);
+                showInfo(image);
+                tvInfo.setText(bitmapInfo);
+                Log.d("zmz-----", "开始进行压缩");
+                //开始进行压缩
                 BitmapFactory.decodeResource(getResources(), R.drawable.pic, options);
                 options.inJustDecodeBounds = false;
                 options.inSampleSize = caculateSampleSize(options, 500, 500);
                 image = BitmapFactory.decodeResource(getResources(), R.drawable.pic, options);
-                ivPic.setImageBitmap(image);
-                showInfo(image);
+                Handler handler = new Handler();
+                handler.postDelayed(new Runnable() {
+                    @Override
+                    public void run() {
+                        ivPic.setImageBitmap(image);
+                        showInfo(image);
+                        tvInfo.setText(bitmapInfo);
+                        Log.d("zmz-----", "压缩完成");
+                    }
+                }, 10000);
+
+            }
+        });
+//缩放压缩
+        btnScaleCompress.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                BitmapInit("pic.jpg");
+                //缩放比例
+                int radio = 8;
+                Bitmap result = Bitmap.createBitmap(image.getWidth() / radio, image.getHeight() / radio,
+                        Bitmap.Config.ARGB_8888);
+                Canvas canvas = new Canvas(result);
+                RectF rectF = new RectF(0, 0, image.getWidth() / radio, image.getHeight() / radio);
+                //将原画缩放到矩形上面
+                canvas.drawBitmap(image, null, rectF, null);
+                ivPic.setImageBitmap(result);
+                showInfo(result);
                 tvInfo.setText(bitmapInfo);
             }
         });
@@ -118,7 +154,6 @@ public class BitmapActivity extends AppCompatActivity {
                 samplesize *= 2;
             }
         }
-        Log.d("zmz-----", "samplesize=" + samplesize);
         return samplesize;
     }
 
@@ -164,7 +199,7 @@ public class BitmapActivity extends AppCompatActivity {
     //显示图片信息
     private void showInfo(Bitmap image) {
         ByteArrayOutputStream byteArrayOutputStream = new ByteArrayOutputStream();
-        image.compress(Bitmap.CompressFormat.JPEG, 60, byteArrayOutputStream);
+        image.compress(Bitmap.CompressFormat.JPEG, 100, byteArrayOutputStream);
         bitmapInfo = "图像宽高:" + image.getWidth() + "*" + image.getHeight() + "\n" +
                 "图片格式:" + image.getConfig().name() + "\n" +
                 "占用内存大小:" + image.getByteCount() / 1024 + "kb \n" +
