@@ -29,6 +29,7 @@ public class BitmapActivity extends AppCompatActivity {
     Button btnQualityCompress;
     Button btnInSampleCompress;
     Button btnScaleCompress;
+    Button btRGB565Compress;
     ImageView ivPic;
     Bitmap image = null;
     TextView tvInfo;
@@ -43,6 +44,7 @@ public class BitmapActivity extends AppCompatActivity {
         btnQualityCompress = findViewById(R.id.btnQualityCompress);
         btnInSampleCompress = findViewById(R.id.btnInSampleCompress);
         btnScaleCompress = findViewById(R.id.btnScaleCompress);
+        btRGB565Compress = findViewById(R.id.btnRGB565Compress);
         ivPic = findViewById(R.id.ivPic);
         tvInfo = findViewById(R.id.tvInfo);
         savePicToDisk(50);
@@ -130,6 +132,20 @@ public class BitmapActivity extends AppCompatActivity {
                 canvas.drawBitmap(image, null, rectF, null);
                 ivPic.setImageBitmap(result);
                 showInfo(result);
+                tvInfo.setText(bitmapInfo);
+            }
+        });
+
+        //转格式
+
+        btRGB565Compress.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                BitmapFactory.Options options = new BitmapFactory.Options();
+                options.inPreferredConfig = Bitmap.Config.RGB_565;
+                image = BitmapFactory.decodeResource(getResources(), R.drawable.pic, options);
+                ivPic.setImageBitmap(image);
+                showInfo(image);
                 tvInfo.setText(bitmapInfo);
             }
         });
