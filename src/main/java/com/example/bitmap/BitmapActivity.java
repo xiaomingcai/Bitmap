@@ -1,10 +1,12 @@
 package com.example.bitmap;
 
+import android.content.Intent;
 import android.content.res.AssetManager;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.graphics.Canvas;
 import android.graphics.RectF;
+import android.os.Build;
 import android.os.Bundle;
 import android.os.Environment;
 import android.os.Handler;
@@ -30,6 +32,7 @@ public class BitmapActivity extends AppCompatActivity {
     Button btnInSampleCompress;
     Button btnScaleCompress;
     Button btRGB565Compress;
+    Button btnBigPic;
     ImageView ivPic;
     Bitmap image = null;
     TextView tvInfo;
@@ -45,6 +48,13 @@ public class BitmapActivity extends AppCompatActivity {
         btnInSampleCompress = findViewById(R.id.btnInSampleCompress);
         btnScaleCompress = findViewById(R.id.btnScaleCompress);
         btRGB565Compress = findViewById(R.id.btnRGB565Compress);
+        btnBigPic = findViewById(R.id.btnBigPic);
+        btnBigPic.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                startActivity(new Intent(BitmapActivity.this, BigPicActivity.class));
+            }
+        });
         ivPic = findViewById(R.id.ivPic);
         tvInfo = findViewById(R.id.tvInfo);
         savePicToDisk(50);
@@ -149,6 +159,8 @@ public class BitmapActivity extends AppCompatActivity {
                 tvInfo.setText(bitmapInfo);
             }
         });
+
+
     }
 
     /**
@@ -178,7 +190,10 @@ public class BitmapActivity extends AppCompatActivity {
         BitmapInit("pic.jpg");
         ByteArrayOutputStream byteArrayOutputStream = new ByteArrayOutputStream();
         image.compress(Bitmap.CompressFormat.JPEG, i, byteArrayOutputStream);
-        File file = new File(getExternalFilesDir(Environment.DIRECTORY_DOWNLOADS), "pic.jpg");
+        File file = null;
+        if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.FROYO) {
+            file = new File(getExternalFilesDir(Environment.DIRECTORY_DOWNLOADS), "pic.jpg");
+        }
         if (!file.exists()) {
             try {
                 file.createNewFile();
@@ -216,12 +231,14 @@ public class BitmapActivity extends AppCompatActivity {
     private void showInfo(Bitmap image) {
         ByteArrayOutputStream byteArrayOutputStream = new ByteArrayOutputStream();
         image.compress(Bitmap.CompressFormat.JPEG, 100, byteArrayOutputStream);
-        bitmapInfo = "图像宽高:" + image.getWidth() + "*" + image.getHeight() + "\n" +
-                "图片格式:" + image.getConfig().name() + "\n" +
-                "占用内存大小:" + image.getByteCount() / 1024 + "kb \n" +
-                "屏幕的density:" + getResources().getDisplayMetrics().density + "\n" +
-                "bitmap.density:" + image.getDensity() + "\n" +
-                "Bitmap转换成文件大小:" + byteArrayOutputStream.toByteArray().length / 1024 + "kb";
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.HONEYCOMB_MR1) {
+            bitmapInfo = "图像宽高:" + image.getWidth() + "*" + image.getHeight() + "\n" +
+                    "图片格式:" + image.getConfig().name() + "\n" +
+                    "占用内存大小:" + image.getByteCount() / 1024 + "kb \n" +
+                    "屏幕的density:" + getResources().getDisplayMetrics().density + "\n" +
+                    "bitmap.density:" + image.getDensity() + "\n" +
+                    "Bitmap转换成文件大小:" + byteArrayOutputStream.toByteArray().length / 1024 + "kb";
+        }
         try {
             byteArrayOutputStream.close();
         } catch (IOException e) {
